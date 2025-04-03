@@ -1,0 +1,138 @@
+/* 全域性樣式 */
+body {
+    font-family: "Microsoft JhengHei", "微軟正黑體", Arial, sans-serif;
+    background-color: #f8f9fa;
+}
+
+/* 路單樣式 */
+.road-map {
+    background-color: white;
+    border-radius: 5px;
+    padding: 10px;
+    min-height: 300px;
+}
+
+.road-map-grid {
+    overflow-x: auto;
+}
+
+.road-table {
+    border-collapse: separate;
+    border-spacing: 2px;
+    margin: 0 auto;
+}
+
+.road-table td {
+    width: 40px;
+    height: 40px;
+    text-align: center;
+    vertical-align: middle;
+    border: 1px solid #ddd;
+    position: relative;
+    font-weight: bold;
+}
+.road-table {
+    border-collapse: collapse;
+    width: 100%;
+}
+.road-cell {
+    width: 30px;
+    height: 30px;
+    border: 1px solid #ddd;
+    text-align: center;
+    position: relative;
+}
+.banker-cell {
+    background-color: #dc3545;
+    color: white;
+}
+
+.player-cell {
+    background-color: #0d6efd;
+    color: white;
+}
+
+.tie-mark {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    font-size: 12px;
+    color: #28a745;
+    font-weight: bold;
+}
+.legend-box {
+    display: inline-block;
+    width: 15px;
+    height: 15px;
+    margin-right: 5px;
+}
+.banker-box {
+    background-color: #dc3545;
+}
+.player-box {
+    background-color: #0d6efd;
+}
+.tie-text {
+    color: #198754;
+    font-weight: bold;
+    margin-right: 5px;
+}
+
+/* 圖例樣式 */
+.road-map-legend {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.legend-color {
+    width: 20px;
+    height: 20px;
+    border-radius: 3px;
+}
+
+.banker-color {
+    background-color: #dc3545;
+}
+
+.player-color {
+    background-color: #0d6efd;
+}
+
+.tie-legend {
+    color: #28a745;
+    font-weight: bold;
+}
+
+/* 按鈕樣式 */
+#banker-btn, #player-btn, #tie-btn {
+    font-size: 1.2rem;
+    font-weight: bold;
+    padding: 15px;
+}
+
+/* 預測結果樣式 */
+#ai-prediction, #formula-prediction {
+    font-size: 1.1rem;
+    padding: 10px;
+}
+
+/* 響應式調整 */
+@media (max-width: 768px) {
+    .road-table td {
+        width: 30px;
+        height: 30px;
+        font-size: 0.8rem;
+    }
+    
+    #banker-btn, #player-btn, #tie-btn {
+        font-size: 1rem;
+        padding: 10px;
+    }
+}

@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+
+{% block title %}百家樂預測系統 - 算牌公式模式{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12 mb-4">
+        <h2>算牌公式模式</h2>
+        <p>使用傳統百家樂算牌公式，根據當前牌點預測結果。</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <!-- 路單顯示 -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h4>百家樂路單</h4>
+            </div>
+            <div class="card-body">
+                <div id="road-map" class="road-map">
+                    <p class="text-center py-3">尚無遊戲記錄</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 結果輸入 -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h4>新增結果</h4>
+            </div>
+            <div class="card-body">
+                <div class="d-flex justify-content-center">
+                    <button id="banker-btn" class="btn btn-banker mx-2">莊家</button>
+                    <button id="player-btn" class="btn btn-player mx-2">閒家</button>
+                    <button id="tie-btn" class="btn btn-tie mx-2">和局</button>
+                </div>
+                <div class="d-flex justify-content-center mt-3">
+                    <button id="undo-btn" class="btn btn-secondary mx-2">撤銷上一局</button>
+                    <button id="clear-btn" class="btn btn-danger mx-2">清空記錄</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <!-- 算牌公式控制區域 -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h4>算牌公式</h4>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label">閒家點數</label>
+                    <div class="d-flex">
+                        <input type="number" id="player-point-1" class="form-control me-2" min="0" max="9" placeholder="點數1">
+                        <input type="number" id="player-point-2" class="form-control me-2" min="0" max="9" placeholder="點數2">
+                        <input type="number" id="player-point-3" class="form-control" min="0" max="9" placeholder="點數3">
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">莊家點數</label>
+                    <div class="d-flex">
+                        <input type="number" id="banker-point-1" class="form-control me-2" min="0" max="9" placeholder="點數1">
+                        <input type="number" id="banker-point-2" class="form-control me-2" min="0" max="9" placeholder="點數2">
+                        <input type="number" id="banker-point-3" class="form-control" min="0" max="9" placeholder="點數3">
+                    </div>
+                </div>
+                <button id="calculate-btn" class="btn btn-primary w-100 mb-3">計算</button>
+                
+                <div class="formula-results mt-3">
+                    <p id="player-frequency">閒家頻率: 0</p>
+                    <p id="banker-frequency">莊家頻率: 0</p>
+                    <p id="advantage-value">優勢牌值: 0</p>
+                </div>
+                
+                <div id="formula-prediction" class="prediction-result mt-3">
+                    尚未計算
+                </div>
+            </div>
+        </div>
+
+        <!-- 歷史管理 -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h4>歷史記錄管理</h4>
+            </div>
+            <div class="card-body">
+                <button id="save-btn" class="btn btn-outline-primary w-100 mb-2">儲存歷史記錄</button>
+                <button id="load-btn" class="btn btn-outline-secondary w-100">載入歷史記錄</button>
+                <input type="file" id="file-upload" style="display: none;">
+            </div>
+        </div>
+
+        <!-- 統計資訊 -->
+        <div class="card">
+            <div class="card-header">
+                <h4>統計資訊</h4>
+            </div>
+            <div class="card-body">
+                <p id="total-rounds">總局數: {{ stats.total_rounds }}</p>
+                <p id="formula-accuracy">公式預測準確率: {{ stats.formula_accuracy|round(1) }}%</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 歷史記錄表格 -->
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h4>歷史記錄</h4>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table id="history-table" class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>局數</th>
+                                <th>結果</th>
+                                <th>預測</th>
+                                <th>準確性</th>
+                                <th>時間</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- 歷史記錄將透過JavaScript動態新增 -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

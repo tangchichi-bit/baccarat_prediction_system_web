@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block title %}百家樂預測系統 - 歷史記錄{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12 mb-4">
+        <h2>歷史記錄</h2>
+        <p>檢視和管理遊戲歷史記錄。</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h4 class="mb-0">歷史記錄管理</h4>
+                <div>
+                    <button id="save-btn" class="btn btn-outline-primary me-2">匯出歷史記錄</button>
+                    <button id="load-btn" class="btn btn-outline-secondary me-2">匯入歷史記錄</button>
+                    <button id="clear-btn" class="btn btn-outline-danger">清空歷史記錄</button>
+                    <input type="file" id="file-upload" style="display: none;">
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table id="history-table" class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>局數</th>
+                                <th>結果</th>
+                                <th>預測</th>
+                                <th>準確性</th>
+                                <th>時間</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for record in history %}
+                            <tr>
+                                <td>{{ record.round }}</td>
+                                <td class="{% if record.result == '莊家' %}text-danger{% elif record.result == '閒家' %}text-primary{% else %}text-success{% endif %}">
+                                    {{ record.result }}
+                                </td>
+                                <td>
+                                    AI: {{ record.ai_prediction or 'N/A' }}, 
+                                    公式: {{ record.formula_prediction or 'N/A' }}
+                                </td>
+                                <td>
+                                    {% if record.ai_prediction and record.ai_prediction == record.result %}
+                                        AI: ✓
+                                    {% elif record.ai_prediction %}
+                                        AI: ✗
+                                    {% endif %}
+                                    
+                                    {% if record.formula_prediction and record.formula_prediction == record.result %}
+                                        公式: ✓
+                                    {% elif record.formula_prediction %}
+                                        公式: ✗
+                                    {% endif %}
+                                </td>
+                                <td>{{ record.time }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h4>路單顯示</h4>
+            </div>
+            <div class="card-body">
+                <div id="road-map" class="road-map">
+                    {% if not history %}
+                    <p class="text-center py-3">尚無遊戲記錄</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

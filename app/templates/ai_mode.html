@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block title %}百家樂預測系統 - 首頁{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12 text-center mb-5">
+        <h1>百家樂 AI 預測與算牌系統</h1>
+        <p class="lead">使用人工智慧和傳統算牌公式預測百家樂結果</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <h3 class="card-title">AI 預測模式</h3>
+                <p class="card-text">使用人工智慧演演演算法分析歷史資料，預測下一局結果。</p>
+                <ul class="text-start">
+                    <li>基於機器學習演演演算法</li>
+                    <li>自動分析歷史走勢</li>
+                    <li>提供預測信心度</li>
+                </ul>
+                <a href="{{ url_for('ai_mode') }}" class="btn btn-primary">進入 AI 預測模式</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <h3 class="card-title">算牌公式模式</h3>
+                <p class="card-text">使用傳統百家樂算牌公式，根據當前牌點預測結果。</p>
+                <ul class="text-start">
+                    <li>基於經典算牌公式</li>
+                    <li>計算莊閒頻率和優勢值</li>
+                    <li>適合實時牌局分析</li>
+                </ul>
+                <a href="{{ url_for('formula_mode') }}" class="btn btn-success">進入算牌公式模式</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h4>系統功能</h4>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <div class="feature-item text-center">
+                            <h5>歷史記錄管理</h5>
+                            <p>記錄遊戲結果，支援匯入匯出</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="feature-item text-center">
+                            <h5>路單顯示</h5>
+                            <p>直觀展示遊戲走勢</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="feature-item text-center">
+                            <h5>統計分析</h5>
+                            <p>計算預測準確率和結果分佈</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
