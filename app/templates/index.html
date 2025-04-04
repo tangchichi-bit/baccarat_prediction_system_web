@@ -11,7 +11,7 @@
 <body>
     <div class="container-fluid mt-3">
         <h1 class="text-center mb-4">百家樂 AI 預測與算牌系統</h1>
-        
+       
         <!-- 模式選擇 -->
         <div class="card mb-3">
             <div class="card-header">
@@ -28,7 +28,7 @@
                 </div>
             </div>
         </div>
-        
+       
         <!-- 手動模式設定 -->
         <div id="manual-settings" class="card mb-3">
             <div class="card-header">
@@ -49,7 +49,7 @@
                 </div>
             </div>
         </div>
-        
+       
         <!-- API模式設定 -->
         <div id="api-settings" class="card mb-3" style="display: none;">
             <div class="card-header">
@@ -83,7 +83,7 @@
                 </div>
             </div>
         </div>
-        
+       
         <!-- 主要操作區域 -->
         <div class="row">
             <!-- 左側控制面板 -->
@@ -129,7 +129,7 @@
                         </div>
                     </div>
                 </div>
-                
+               
                 <!-- AI 預測與算牌公式 -->
 <div class="row mb-4">
     <div class="col-md-6">
@@ -190,6 +190,7 @@
     </div>
 </div>
 
+
 <!-- 新增牌型輸入區域 -->
 <div class="card mb-4">
     <div class="card-header">牌型輸入</div>
@@ -214,6 +215,7 @@
         </div>
     </div>
 </div>
+
 
              
                 <!-- 統計資料 -->
@@ -249,7 +251,7 @@
                     </div>
                 </div>
             </div>
-            
+           
             <!-- 右側顯示區域 -->
             <div class="col-md-8">
                 <!-- 結果輸入 -->
@@ -279,7 +281,7 @@
                         </div>
                     </div>
                 </div>
-                
+               
                 <!-- 百家樂路單 -->
                 <div class="card mb-3">
                     <div class="card-header">
@@ -291,7 +293,7 @@
                         </div>
                     </div>
                 </div>
-                
+               
                 <!-- 歷史記錄 -->
                 <div class="card mb-3">
                     <div class="card-header">
@@ -318,9 +320,10 @@
             </div>
         </div>
     </div>
-    
+   
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 </body>
 </html>
+

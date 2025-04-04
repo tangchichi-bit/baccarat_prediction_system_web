@@ -2,6 +2,7 @@
 let gameHistory = [];
 let socket;
 
+
 // 頁面載入完成後執行
 $(document).ready(function() {
     // 初始化Socket.IO連線
@@ -16,6 +17,7 @@ $(document).ready(function() {
     // 更新統計資料
     updateStatistics();
 });
+
 
 // 初始化Socket.IO連線
 function initSocketIO() {
@@ -36,12 +38,14 @@ function initSocketIO() {
     });
 }
 
+
 // 初始化牌靴
 function initShoe() {
     $.get('/api/shoe', function(data) {
         updateShoeDisplay(data);
     });
 }
+
 
 // 更新牌靴顯示
 function updateShoeDisplay(data) {
@@ -50,6 +54,7 @@ function updateShoeDisplay(data) {
     $('#player-prob').text((data.player_probability * 100).toFixed(1) + '%');
     $('#tie-prob').text((data.tie_probability * 100).toFixed(1) + '%');
 }
+
 
 // 繫結事件處理函式
 function bindEventHandlers() {
@@ -223,6 +228,7 @@ function bindEventHandlers() {
         });
     });
 
+
     // 算牌公式預測按鈕點選事件
     $('#formula-predict-btn').click(function() {
         $.ajax({
@@ -322,21 +328,22 @@ function bindEventHandlers() {
         }
     });
 
+
     // 計算公式結果
 $('#calculate-formula-btn').click(function() {
     // 獲取莊家牌型
     let bankerCards = $('#banker-cards').val().trim();
     // 獲取閒家牌型
     let playerCards = $('#player-cards').val().trim();
-    
+   
     // 檢查是否輸入了牌型
     if (!bankerCards || !playerCards) {
         alert('請輸入莊家和閒家牌型');
         return;
     }
-    
+   
     console.log("發送數據 - 莊家牌:", bankerCards, "閒家牌:", playerCards);
-    
+   
     // 發送請求
     $.ajax({
         url: '/api/formula/calculate',
@@ -352,7 +359,7 @@ $('#calculate-formula-btn').click(function() {
                 // 更新公式預測結果
                 let formulaResult = data.formula_result;
                 let formulaConfidence = data.formula_confidence.toFixed(2);
-                
+               
                 let formulaColor = 'black';
                 if (formulaResult === '莊家') {
                     formulaColor = 'red';
@@ -361,7 +368,7 @@ $('#calculate-formula-btn').click(function() {
                 } else if (formulaResult === '和局') {
                     formulaColor = 'green';
                 }
-                
+               
                 $('#formula-prediction').html(`
                     <span style="color: ${formulaColor}; font-weight: bold;">
                         ${formulaResult} (信心度: ${formulaConfidence}%)
@@ -378,7 +385,9 @@ $('#calculate-formula-btn').click(function() {
     });
 });
 
+
 }
+
 
 // 新增結果（含牌型）
 $('#add-with-cards-btn').click(function() {
@@ -554,6 +563,7 @@ function updateCardAnalysis(bankerCards, playerCards) {
         }
     });
 }
+
 
 // 監聽牌型輸入變化
 $('#banker-card1, #banker-card2, #banker-card3, #player-card1, #player-card2, #player-card3').on('input', function() {
@@ -797,5 +807,3 @@ function updateStatistics(stats) {
     $('#formula-accuracy').text(formulaAccuracy.toFixed(1) + '%');
     $('#match-rate').text(matchRate.toFixed(1) + '%');
 }
-
-
