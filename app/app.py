@@ -5,21 +5,34 @@
 百家樂 AI 預測與算牌系統後端 API
 """
 
-from flask import Flask, render_template, request, jsonify
-from flask_socketio import SocketIO
+# 匯入必要的模組
+import sys
+import os
 import time
 import random
-from models.ai_model import BaccaratAIModel
-from models.card_formula import BaccaratCardFormula
-from models.shoe_manager import ShoeManager
 
+# 新增專案根目錄到Python路徑
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+# Flask相關匯入
+from flask import Flask, Blueprint, request, jsonify, render_template
+from flask_socketio import SocketIO
+from flask_cors import CORS
+
+# 匯入自定義模組
+from models.ai_model import BaccaratAIModel
+from models.shoe_manager import ShoeManager
+from models.card_formula import BaccaratCardFormula
+
+# 初始化Flask應用
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'baccarat-prediction-system'
 socketio = SocketIO(app)
+CORS(app)  # 啟用CORS支援
 
 # 初始化模型和管理器
 ai_model = BaccaratAIModel()
-formula_calculator = BaccaratCardFormula()
+card_formula = BaccaratCardFormula()
 shoe_manager = ShoeManager(auto_detect=True, warmup_size=15)
 
 # 遊戲歷史記錄
@@ -31,7 +44,7 @@ def index():
     return render_template('index.html')
 
 @app.route('/api/shoe', methods=['GET'])
-def get_shoe_info():
+def get_shoe_status():
     """獲取牌靴資訊"""
     return jsonify({
         'shoe_id': shoe_manager.get_current_shoe_id(),
@@ -84,7 +97,7 @@ def update_shoe_settings():
     })
 
 @app.route('/api/train', methods=['POST'])
-def train_model():
+def train():
     """訓練模型"""
     data = request.json
     history = data.get('history', [])
@@ -113,17 +126,17 @@ def predict_ai():
     """AI預測下一局結果"""
     try:
         data = request.json
-        print(f"收到AI预测请求: {data}")
+        print(f"收到AI預測請求: {data}")
         
         if not data:
-            print("请求数据为空")
+            print("請求資料為空")
             return jsonify({
                 'success': False,
-                'message': '请求数据为空'
+                'message': '請求資料為空'
             }), 400
             
         history = data.get('history', [])
-        print(f"历史记录: {history}")
+        print(f"歷史記錄: {history}")
         
         # AI預測
         ai_result = "無法預測"
@@ -132,7 +145,7 @@ def predict_ai():
         if ai_model.is_trained and len(history) >= 10:
             try:
                 ai_result, ai_confidence = ai_model.predict(history)
-                print(f"AI预测结果: {ai_result}, 信心度: {ai_confidence}")
+                print(f"AI預測結果: {ai_result}, 信心度: {ai_confidence}")
             except Exception as e:
                 print(f"AI預測錯誤: {str(e)}")
                 import traceback
@@ -146,65 +159,77 @@ def predict_ai():
             'confidence': ai_confidence
         })
     except Exception as e:
-        print(f"处理AI预测请求时出错: {str(e)}")
+        print(f"處理AI預測請求時出錯: {str(e)}")
         import traceback
         traceback.print_exc()
         return jsonify({
             'success': False,
-            'message': f'处理请求时出错: {str(e)}'
+            'message': f'處理請求時出錯: {str(e)}'
         }), 500
-
 
 # 算牌公式預測API
 @app.route('/api/predict/formula', methods=['POST'])
 def predict_formula():
     """算牌公式預測下一局結果"""
-    data = request.json
-    banker_cards = data.get('banker_cards', [])
-    player_cards = data.get('player_cards', [])
-    
-    if not banker_cards or not player_cards:
+    try:
+        data = request.json
+        print(f"收到公式預測請求: {data}")
+        
+        banker_cards = data.get('banker_cards', [])
+        player_cards = data.get('player_cards', [])
+        
+        if not banker_cards or not player_cards:
+            return jsonify({
+                'success': False,
+                'message': '請提供莊家和閒家的牌'
+            })
+        
+        # 計算頻率
+        banker_frequency = card_formula.calculate_banker_frequency(banker_cards)
+        player_frequency = card_formula.calculate_player_frequency(player_cards)
+        
+        # 計算優勢值
+        banker_advantage = card_formula.calculate_advantage_value(banker_cards)
+        player_advantage = card_formula.calculate_advantage_value(player_cards)
+        
+        # 簡單預測
+        if banker_frequency > player_frequency:
+            prediction = "莊家"
+            confidence = min(100, abs(banker_frequency - player_frequency) * 10)
+        elif player_frequency > banker_frequency:
+            prediction = "閒家"
+            confidence = min(100, abs(player_frequency - banker_frequency) * 10)
+        else:
+            # 如果頻率相同，使用優勢值決定
+            if banker_advantage > player_advantage:
+                prediction = "莊家"
+                confidence = min(100, abs(banker_advantage - player_advantage) * 5)
+            elif player_advantage > banker_advantage:
+                prediction = "閒家"
+                confidence = min(100, abs(player_advantage - banker_advantage) * 5)
+            else:
+                prediction = "和局"
+                confidence = 50
+        
+        print(f"公式預測結果: {prediction}, 信心度: {confidence}")
+        
+        return jsonify({
+            'success': True,
+            'prediction': prediction,
+            'confidence': confidence,
+            'banker_frequency': banker_frequency,
+            'player_frequency': player_frequency,
+            'banker_advantage': banker_advantage,
+            'player_advantage': player_advantage
+        })
+    except Exception as e:
+        print(f"公式預測錯誤: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return jsonify({
             'success': False,
-            'message': '請提供莊家和閒家的牌'
-        })
-    
-    # 計算頻率
-    banker_frequency = formula_calculator.calculate_banker_frequency(banker_cards)
-    player_frequency = formula_calculator.calculate_player_frequency(player_cards)
-    
-    # 計算優勢值
-    banker_advantage = formula_calculator.calculate_advantage_value(banker_cards)
-    player_advantage = formula_calculator.calculate_advantage_value(player_cards)
-    
-    # 簡單預測
-    if banker_frequency > player_frequency:
-        prediction = "莊"
-        confidence = min(100, abs(banker_frequency - player_frequency) * 10)
-    elif player_frequency > banker_frequency:
-        prediction = "閒"
-        confidence = min(100, abs(player_frequency - banker_frequency) * 10)
-    else:
-        # 如果頻率相同，使用優勢值決定
-        if banker_advantage > player_advantage:
-            prediction = "莊"
-            confidence = min(100, abs(banker_advantage - player_advantage) * 5)
-        elif player_advantage > banker_advantage:
-            prediction = "閒"
-            confidence = min(100, abs(player_advantage - banker_advantage) * 5)
-        else:
-            prediction = "和"
-            confidence = 50
-    
-    return jsonify({
-        'success': True,
-        'prediction': prediction,
-        'confidence': confidence,
-        'banker_frequency': banker_frequency,
-        'player_frequency': player_frequency,
-        'banker_advantage': banker_advantage,
-        'player_advantage': player_advantage
-    })
+            'message': f'公式預測失敗: {str(e)}'
+        }), 500
 
 # 保留原來的組合預測API，但在前端不使用它
 @app.route('/api/predict', methods=['POST'])
@@ -225,7 +250,7 @@ def predict_next():
             ai_result = "預測錯誤"
             ai_confidence = 0
     
-    # 算牌公式預測 - 這裡需要修改，因為我們現在需要牌型數據
+    # 算牌公式預測 - 這裡需要修改，因為我們現在需要牌型資料
     formula_result = "無法預測"
     formula_confidence = 0
     
@@ -240,7 +265,6 @@ def predict_next():
             'confidence': formula_confidence
         }
     })
-
 
 @app.route('/api/history/add', methods=['POST'])
 def add_result():
@@ -305,7 +329,7 @@ def add_result():
     })
 
 @app.route('/api/history/undo', methods=['POST'])
-def undo_last_result():
+def undo_last():
     """撤銷上一局結果"""
     global game_history
     
@@ -336,7 +360,7 @@ def undo_last_result():
     })
 
 @app.route('/api/history/clear', methods=['POST'])
-def clear_all_results():
+def clear_history():
     """清空所有記錄"""
     global game_history
     
@@ -391,131 +415,264 @@ def calculate_statistics():
     match_rate = (match_count / valid_predictions) * 100 if valid_predictions > 0 else 0
     
     return {
-        'total_rounds': total_rounds,
+                'total_rounds': total_rounds,
         'ai_accuracy': ai_accuracy,
         'formula_accuracy': formula_accuracy,
         'match_rate': match_rate
     }
 
-@app.route('/api/formula/calculate', methods=['POST'])
-def calculate_formula():
-    """計算算牌公式結果"""
-    data = request.json
-    banker_cards = data.get('banker_cards', [])
-    player_cards = data.get('player_cards', [])
-    
-    if len(banker_cards) < 2 or len(player_cards) < 2:
-        return jsonify({
-            'success': False,
-            'message': '請至少輸入莊家和閒家的前兩張牌'
-        })
-    
-    try:
-        # 計算百家樂點數
-        banker_points = sum(banker_cards) % 10
-        player_points = sum(player_cards) % 10
-        
-        # 計算頻率
-        banker_frequency = formula_calculator.calculate_banker_frequency(banker_cards)
-        player_frequency = formula_calculator.calculate_player_frequency(player_cards)
-        
-        # 計算優劣勢牌值
-        banker_advantage = formula_calculator.calculate_advantage_value(banker_cards)
-        player_advantage = formula_calculator.calculate_advantage_value(player_cards)
-        
-        # 公式結果
-        if banker_frequency > player_frequency:
-            formula_result = "莊"
-            formula_confidence = min(100, abs(banker_frequency - player_frequency) * 10)
-        elif player_frequency > banker_frequency:
-            formula_result = "閒"
-            formula_confidence = min(100, abs(player_frequency - banker_frequency) * 10)
-        else:
-                        # 如果頻率相同，使用優勢值決定
-            if banker_advantage > player_advantage:
-                formula_result = "莊"
-                formula_confidence = min(100, abs(banker_advantage - player_advantage) * 5)
-            elif player_advantage > banker_advantage:
-                formula_result = "閒"
-                formula_confidence = min(100, abs(player_advantage - banker_advantage) * 5)
-            else:
-                formula_result = "和"
-                formula_confidence = 50
-        
-        return jsonify({
-            'success': True,
-            'banker_points': banker_points,
-            'player_points': player_points,
-            'banker_frequency': banker_frequency,
-            'player_frequency': player_frequency,
-            'banker_advantage': banker_advantage,
-            'player_advantage': player_advantage,
-            'formula_result': formula_result,
-            'formula_confidence': formula_confidence
-        })
-    
-    except Exception as e:
-        return jsonify({
-            'success': False,
-            'message': f'計算公式結果失敗: {str(e)}'
-        })
-
 @app.route('/api/formula/analyze', methods=['POST'])
-def analyze_cards():
-    """分析牌型"""
-    data = request.json
-    banker_cards = data.get('banker_cards', [])
-    player_cards = data.get('player_cards', [])
-    
-    if len(banker_cards) < 2 or len(player_cards) < 2:
-        return jsonify({
-            'success': False,
-            'message': '請至少輸入莊家和閒家的前兩張牌'
-        })
-    
+def analyze_formula():
+    """分析公式"""
     try:
-        # 計算百家樂點數
-        banker_points = sum(banker_cards) % 10
-        player_points = sum(player_cards) % 10
+        data = request.json
+        print(f"接收到的原始數據: {data}")
         
-        # 計算頻率
-        banker_frequency = formula_calculator.calculate_banker_frequency(banker_cards)
-        player_frequency = formula_calculator.calculate_player_frequency(player_cards)
+        # 處理連續輸入的字串
+        banker_cards_input = data.get('banker_cards', '')
+        player_cards_input = data.get('player_cards', '')
         
-        # 計算優劣勢牌值
-        banker_advantage = formula_calculator.calculate_advantage_value(banker_cards)
-        player_advantage = formula_calculator.calculate_advantage_value(player_cards)
+        # 將輸入轉換為數字列表
+        banker_cards = []
+        player_cards = []
         
-        # 赫茲結果
+        # 處理莊家牌
+        if isinstance(banker_cards_input, str):
+            # 先嘗試按空格分割
+            if ' ' in banker_cards_input:
+                try:
+                    banker_cards = [int(num) for num in banker_cards_input.split()]
+                    # 驗證數字範圍
+                    for num in banker_cards:
+                        if not 0 <= num <= 9:
+                            return jsonify({'success': False, 'message': f'莊家牌值必須在0-9之間，發現無效值: {num}'})
+                except ValueError:
+                    banker_cards = []  # 重置，使用下面的字元解析方法
+            
+            # 如果空格分割失敗或沒有空格，嘗試將每個字元轉換為數字
+            if not banker_cards:
+                for char in banker_cards_input:
+                    try:
+                        num = int(char)
+                        if 0 <= num <= 9:  # 確保牌值在有效範圍內
+                            banker_cards.append(num)
+                        else:
+                            return jsonify({'success': False, 'message': f'莊家牌值必須在0-9之間，發現無效值: {num}'})
+                    except ValueError:
+                        # 忽略非數字字元
+                        pass
+        elif isinstance(banker_cards_input, list):
+            # 如果已經是列表，直接使用
+            banker_cards = banker_cards_input
+        
+        # 處理閒家牌
+        if isinstance(player_cards_input, str):
+            # 先嘗試按空格分割
+            if ' ' in player_cards_input:
+                try:
+                    player_cards = [int(num) for num in player_cards_input.split()]
+                    # 驗證數字範圍
+                    for num in player_cards:
+                        if not 0 <= num <= 9:
+                            return jsonify({'success': False, 'message': f'閒家牌值必須在0-9之間，發現無效值: {num}'})
+                except ValueError:
+                    player_cards = []  # 重置，使用下面的字元解析方法
+            
+            # 如果空格分割失敗或沒有空格，嘗試將每個字元轉換為數字
+            if not player_cards:
+                for char in player_cards_input:
+                    try:
+                        num = int(char)
+                        if 0 <= num <= 9:  # 確保牌值在有效範圍內
+                            player_cards.append(num)
+                        else:
+                            return jsonify({'success': False, 'message': f'閒家牌值必須在0-9之間，發現無效值: {num}'})
+                    except ValueError:
+                        # 忽略非數字字元
+                        pass
+        elif isinstance(player_cards_input, list):
+            # 如果已經是列表，直接使用
+            player_cards = player_cards_input
+        
+        print(f"處理後 - 莊家牌: {banker_cards}, 閒家牌: {player_cards}")
+        
+        # 確保有牌可分析
+        if not banker_cards or not player_cards:
+            return jsonify({'success': False, 'message': '請輸入有效的牌值'})
+        
+        # 呼叫公式計算邏輯
+        banker_frequency = card_formula.calculate_banker_frequency(banker_cards)
+        player_frequency = card_formula.calculate_player_frequency(player_cards)
+        
+        # 計算優勢牌值
+        banker_advantage = card_formula.calculate_advantage_value(banker_cards)
+        player_advantage = card_formula.calculate_advantage_value(player_cards)
+        
+        # 確定赫茲結果
+        hertz_result = '無預測'  # 預設值
+        
         if banker_frequency > player_frequency:
-            hertz_result = "莊家"
+            hertz_result = '莊家'
         elif player_frequency > banker_frequency:
-            hertz_result = "閒家"
+            hertz_result = '閒家'
         else:
-            # 如果頻率相同，使用優勢值決定
+            # 如果頻率相同，比較優勢值
             if banker_advantage > player_advantage:
-                hertz_result = "莊家"
+                hertz_result = '莊家'
             elif player_advantage > banker_advantage:
-                hertz_result = "閒家"
+                hertz_result = '閒家'
             else:
-                hertz_result = "和局"
+                hertz_result = '和局'
+        
+        # 計算和局頻率 (如果您的公式支援)
+        tie_frequency = 0  # 預設值，根據您的邏輯可能需要調整
         
         return jsonify({
             'success': True,
-            'banker_points': banker_points,
-            'player_points': player_points,
             'banker_frequency': banker_frequency,
             'player_frequency': player_frequency,
+            'tie_frequency': tie_frequency,
             'banker_advantage': banker_advantage,
             'player_advantage': player_advantage,
             'hertz_result': hertz_result
         })
-    
     except Exception as e:
+        import traceback
+        print(f"分析公式時出錯: {str(e)}")
+        traceback.print_exc()  # 列印詳細錯誤資訊
+        return jsonify({'success': False, 'message': f'計算公式結果失敗: {str(e)}'})
+
+
+@app.route('/api/formula/calculate', methods=['POST'])
+def calculate_formula():
+    """計算公式"""
+    try:
+        data = request.json
+        print(f"接收到的原始數據: {data}")
+        
+        # 處理連續輸入的字串
+        banker_cards_input = data.get('banker_cards', '')
+        player_cards_input = data.get('player_cards', '')
+        
+        # 將輸入轉換為數字列表
+        banker_cards = []
+        player_cards = []
+        
+        # 處理莊家牌
+        if isinstance(banker_cards_input, str):
+            # 先嘗試按空格分割
+            if ' ' in banker_cards_input:
+                try:
+                    banker_cards = [int(num) for num in banker_cards_input.split()]
+                    # 驗證數字範圍
+                    for num in banker_cards:
+                        if not 0 <= num <= 9:
+                            return jsonify({'success': False, 'message': f'莊家牌值必須在0-9之間，發現無效值: {num}'})
+                except ValueError:
+                    banker_cards = []  # 重置，使用下面的字元解析方法
+            
+            # 如果空格分割失敗或沒有空格，嘗試將每個字元轉換為數字
+            if not banker_cards:
+                for char in banker_cards_input:
+                    try:
+                        num = int(char)
+                        if 0 <= num <= 9:  # 確保牌值在有效範圍內
+                            banker_cards.append(num)
+                        else:
+                            return jsonify({'success': False, 'message': f'莊家牌值必須在0-9之間，發現無效值: {num}'})
+                    except ValueError:
+                        # 忽略非數字字元
+                        pass
+        elif isinstance(banker_cards_input, list):
+            # 如果已經是列表，直接使用
+            banker_cards = banker_cards_input
+        
+        # 處理閒家牌
+        if isinstance(player_cards_input, str):
+            # 先嘗試按空格分割
+            if ' ' in player_cards_input:
+                try:
+                    player_cards = [int(num) for num in player_cards_input.split()]
+                    # 驗證數字範圍
+                    for num in player_cards:
+                        if not 0 <= num <= 9:
+                            return jsonify({'success': False, 'message': f'閒家牌值必須在0-9之間，發現無效值: {num}'})
+                except ValueError:
+                    player_cards = []  # 重置，使用下面的字元解析方法
+            
+            # 如果空格分割失敗或沒有空格，嘗試將每個字元轉換為數字
+            if not player_cards:
+                for char in player_cards_input:
+                    try:
+                        num = int(char)
+                        if 0 <= num <= 9:  # 確保牌值在有效範圍內
+                            player_cards.append(num)
+                        else:
+                            return jsonify({'success': False, 'message': f'閒家牌值必須在0-9之間，發現無效值: {num}'})
+                    except ValueError:
+                        # 忽略非數字字元
+                        pass
+        elif isinstance(player_cards_input, list):
+            # 如果已經是列表，直接使用
+            player_cards = player_cards_input
+        
+        print(f"處理後 - 莊家牌: {banker_cards}, 閒家牌: {player_cards}")
+        
+        # 確保有牌可分析
+        if not banker_cards or not player_cards:
+            return jsonify({'success': False, 'message': '請輸入有效的牌值'})
+        
+        # 計算百家樂點數
+        banker_points = sum(banker_cards) % 10
+        player_points = sum(player_cards) % 10
+        
+        # 呼叫公式計算邏輯
+        banker_frequency = card_formula.calculate_banker_frequency(banker_cards)
+        player_frequency = card_formula.calculate_player_frequency(player_cards)
+        
+        # 確定預測結果
+        if banker_frequency > player_frequency:
+            prediction = '莊家'
+        elif player_frequency > banker_frequency:
+            prediction = '閒家'
+        else:
+            # 如果頻率相同，比較優勢值
+            banker_advantage = card_formula.calculate_advantage_value(banker_cards)
+            player_advantage = card_formula.calculate_advantage_value(player_cards)
+            
+            if banker_advantage > player_advantage:
+                prediction = '莊家'
+            elif player_advantage > banker_advantage:
+                prediction = '閒家'
+            else:
+                prediction = '和局'
+        
+        # 計算信心度
+        if banker_frequency != player_frequency:
+            confidence = min(100, abs(banker_frequency - player_frequency) * 10)
+        else:
+            banker_advantage = card_formula.calculate_advantage_value(banker_cards)
+            player_advantage = card_formula.calculate_advantage_value(player_cards)
+            confidence = min(100, abs(banker_advantage - player_advantage) * 5)
+            if banker_advantage == player_advantage:
+                confidence = 50
+        
         return jsonify({
-            'success': False,
-            'message': f'分析牌型失敗: {str(e)}'
+            'success': True,
+            'banker_points': banker_points,
+            'player_points': player_points,
+            'banker_frequency': banker_frequency,
+            'player_frequency': player_frequency,
+            'banker_advantage': card_formula.calculate_advantage_value(banker_cards),
+            'player_advantage': card_formula.calculate_advantage_value(player_cards),
+            'prediction': prediction,
+            'confidence': confidence
         })
+    except Exception as e:
+        import traceback
+        print(f"計算公式時出錯: {str(e)}")
+        traceback.print_exc()
+        return jsonify({'success': False, 'message': f'計算公式結果失敗: {str(e)}'})
 
 @app.route('/api/history/add_with_cards', methods=['POST'])
 def add_result_with_cards():
@@ -551,12 +708,12 @@ def add_result_with_cards():
     # 使用牌型進行公式預測
     try:
         # 計算頻率
-        banker_frequency = formula_calculator.calculate_banker_frequency(banker_cards)
-        player_frequency = formula_calculator.calculate_player_frequency(player_cards)
+        banker_frequency = card_formula.calculate_banker_frequency(banker_cards)
+        player_frequency = card_formula.calculate_player_frequency(player_cards)
         
         # 計算優劣勢牌值
-        banker_advantage = formula_calculator.calculate_advantage_value(banker_cards)
-        player_advantage = formula_calculator.calculate_advantage_value(player_cards)
+        banker_advantage = card_formula.calculate_advantage_value(banker_cards)
+        player_advantage = card_formula.calculate_advantage_value(player_cards)
         
         # 公式結果
         if banker_frequency > player_frequency:
@@ -619,7 +776,7 @@ def get_history():
 
 @app.route('/api/history/import', methods=['POST'])
 def import_history():
-    """導入遊戲歷史記錄"""
+    """匯入遊戲歷史記錄"""
     global game_history
     
     data = request.json
@@ -634,14 +791,14 @@ def import_history():
     # 更新歷史記錄
     game_history = history
     
-    # 重置牌靴並添加所有結果
+    # 重置牌靴並新增所有結果
     shoe_manager.reset_all()
     for record in history:
         shoe_manager.add_result(record.get('result', ''))
     
     return jsonify({
         'success': True,
-        'message': f'已導入 {len(history)} 筆歷史記錄',
+        'message': f'已匯入 {len(history)} 筆歷史記錄',
         'shoe_info': {
             'shoe_id': shoe_manager.get_current_shoe_id(),
             'cards_remaining': shoe_manager.get_remaining_cards_count(),
@@ -654,4 +811,5 @@ def import_history():
 
 if __name__ == '__main__':
     socketio.run(app, debug=True, host='0.0.0.0', port=5000)
+
 
