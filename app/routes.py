@@ -1,5 +1,3 @@
-#後端程式碼（Flask路由）
-
 from flask import render_template, jsonify, request
 from app import app, socketio
 from app.models.ai_model import BaccaratAIModel
@@ -23,11 +21,11 @@ def predict_next():
     """預測下一局結果"""
     data = request.json
     history = data.get('history', [])
-   
+    
     # AI預測
     ai_result = "無法預測"
     ai_confidence = 0
-   
+    
     if ai_model.is_trained and len(history) >= 10:
         try:
             ai_result, ai_confidence = ai_model.predict(history)
@@ -35,11 +33,11 @@ def predict_next():
             print(f"AI預測錯誤: {str(e)}")
             ai_result = "預測錯誤"
             ai_confidence = 0
-   
+    
     # 算牌公式預測
     formula_result = "無法預測"
     formula_confidence = 0
-   
+    
     if len(history) >= 5:
         try:
             formula_result, formula_confidence = formula_calculator.predict(history)
@@ -47,7 +45,7 @@ def predict_next():
             print(f"公式預測錯誤: {str(e)}")
             formula_result = "預測錯誤"
             formula_confidence = 0
-   
+    
     return jsonify({
         'success': True,
         'ai_prediction': {
@@ -65,11 +63,11 @@ def predict_ai():
     """AI預測下一局結果"""
     data = request.json
     history = data.get('history', [])
-   
+    
     # AI預測
     ai_result = "無法預測"
     ai_confidence = 0
-   
+    
     if ai_model.is_trained and len(history) >= 10:
         try:
             ai_result, ai_confidence = ai_model.predict(history)
@@ -77,7 +75,7 @@ def predict_ai():
             print(f"AI預測錯誤: {str(e)}")
             ai_result = "預測錯誤"
             ai_confidence = 0
-   
+    
     return jsonify({
         'success': True,
         'prediction': ai_result,
@@ -89,15 +87,15 @@ def train():
     """訓練AI模型"""
     data = request.json
     history = data.get('history', [])
-   
+    
     if len(history) < 10:
         return jsonify({
             'success': False,
             'message': '歷史記錄太少，請至少輸入 10 筆資料'
         })
-   
+    
     success = ai_model.train(history)
-   
+    
     if success:
         return jsonify({
             'success': True,
@@ -133,11 +131,11 @@ def draw_cards():
     data = request.json
     banker_cards = data.get('banker_cards', [])
     player_cards = data.get('player_cards', [])
-   
+    
     # 從牌靴中移除這些牌
     for card in banker_cards + player_cards:
         shoe_manager.remove_card(card)
-   
+    
     return jsonify({
         'success': True,
         'cards_remaining': shoe_manager.get_remaining_cards()
@@ -154,29 +152,29 @@ def add_result():
     global game_history
     data = request.json
     result = data.get('result')
-   
+    
     if not result:
         return jsonify({'success': False, 'message': '結果不能為空'})
-   
+    
     # 獲取當前時間
     current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-   
+    
     # 獲取當前局數
     round_number = len(game_history) + 1
-   
+    
     # 獲取預測結果
     history_results = [record['result'] for record in game_history]
-   
+    
     # AI預測
     ai_prediction = "無法預測"
     if ai_model.is_trained and len(history_results) >= 10:
         ai_prediction, _ = ai_model.predict(history_results)
-   
+    
     # 算牌公式預測
     formula_prediction = "無法預測"
     if len(history_results) >= 5:
         formula_prediction, _ = formula_calculator.predict(history_results)
-   
+    
     # 建立記錄
     record = {
         'round': round_number,
@@ -185,13 +183,13 @@ def add_result():
         'ai_prediction': ai_prediction,
         'formula_prediction': formula_prediction
     }
-   
+    
     # 新增到歷史記錄
     game_history.append(record)
-   
+    
     # 計算統計資料
     statistics = calculate_statistics()
-   
+    
     return jsonify({
         'success': True,
         'record': record,
@@ -204,10 +202,10 @@ def undo_last():
     global game_history
     if not game_history:
         return jsonify({'success': False, 'message': '沒有可撤銷的記錄'})
-   
+    
     game_history.pop()
     statistics = calculate_statistics()
-   
+    
     return jsonify({
         'success': True,
         'history': game_history,
@@ -219,7 +217,7 @@ def clear_history():
     """清空所有記錄"""
     global game_history
     game_history = []
-   
+    
     return jsonify({
         'success': True,
         'message': '已清空所有記錄'
@@ -236,9 +234,9 @@ def calculate_formula():
     """計算公式"""
     try:
         data = request.json
-        print(f"接收到的原始數據: {data}")  # 調試信息
+        print(f"接收到的原始資料: {data}")  # 除錯資訊
         
-        # 獲取輸入數據
+        # 獲取輸入資料
         banker_cards_input = data.get('banker_cards', '')
         player_cards_input = data.get('player_cards', '')
         
@@ -249,7 +247,7 @@ def calculate_formula():
                 'message': '請輸入莊家和閒家的牌型'
             })
         
-        # 處理不同類型的輸入
+        # 處理不同型別的輸入
         banker_cards = []
         player_cards = []
         
@@ -264,7 +262,7 @@ def calculate_formula():
                     'message': '莊家牌值必須是數字 (0-9)'
                 })
         elif isinstance(banker_cards_input, str):
-            # 如果是字符串，移除所有空格並逐個字符轉換
+            # 如果是字串，移除所有空格並逐個字元轉換
             banker_cards_input = banker_cards_input.replace(" ", "")
             try:
                 banker_cards = [int(card) for card in banker_cards_input]
@@ -274,7 +272,7 @@ def calculate_formula():
                     'message': '莊家牌值必須是數字 (0-9)'
                 })
         else:
-            # 其他類型，嘗試轉換為字符串後處理
+            # 其他型別，嘗試轉換為字串後處理
             try:
                 banker_cards_input = str(banker_cards_input).replace(" ", "")
                 banker_cards = [int(card) for card in banker_cards_input]
@@ -320,7 +318,7 @@ def calculate_formula():
                     'message': '牌值必須在0-9範圍內 (10/J/Q/K輸入為0)'
                 })
         
-        # 列印處理後的數據，用於除錯
+        # 列印處理後的資料，用於除錯
         print(f"處理後 - 莊家牌: {banker_cards}, 閒家牌: {player_cards}")
         
         # 計算百家樂點數
@@ -356,8 +354,8 @@ def calculate_formula():
             'player_points': player_points,
             'banker_frequency': banker_frequency,
             'player_frequency': player_frequency,
-            'formula_result': prediction,  # 修改為前端期望的字段名
-            'formula_confidence': 80  # 添加一個置信度值
+            'formula_result': prediction,  # 修改為前端期望的欄位名
+            'formula_confidence': 80  # 新增一個置信度值
         })
     except Exception as e:
         import traceback
@@ -365,15 +363,14 @@ def calculate_formula():
         traceback.print_exc()  # 列印詳細錯誤資訊
         return jsonify({'success': False, 'message': f'計算公式結果失敗: {str(e)}'})
 
-
 @app.route('/api/formula/analyze', methods=['POST'])
 def analyze_formula():
     """分析公式"""
     try:
         data = request.json
-        print(f"接收到的原始數據: {data}")  # 調試信息
+        print(f"接收到的原始資料: {data}")  # 除錯資訊
         
-        # 獲取輸入數據
+        # 獲取輸入資料
         banker_cards_input = data.get('banker_cards', '')
         player_cards_input = data.get('player_cards', '')
         
@@ -384,7 +381,7 @@ def analyze_formula():
                 'message': '請輸入莊家和閒家的牌型'
             })
         
-        # 處理不同類型的輸入
+        # 處理不同型別的輸入
         banker_cards = []
         player_cards = []
         
@@ -452,7 +449,7 @@ def analyze_formula():
                     'message': '牌值必須在0-9範圍內 (10/J/Q/K輸入為0)'
                 })
         
-        # 列印處理後的數據
+        # 列印處理後的資料
         print(f"處理後 - 莊家牌: {banker_cards}, 閒家牌: {player_cards}")
         
         # 呼叫公式計算邏輯
@@ -489,7 +486,7 @@ def analyze_formula():
             'tie_frequency': tie_frequency,
             'banker_advantage': banker_advantage,
             'player_advantage': player_advantage,
-            'prediction': hertz_result  # 修改為統一的字段名
+            'prediction': hertz_result  # 修改為統一的欄位名
         })
     except Exception as e:
         import traceback
@@ -497,50 +494,49 @@ def analyze_formula():
         traceback.print_exc()
         return jsonify({'success': False, 'message': f'計算公式結果失敗: {str(e)}'})
 
-
 def calculate_statistics():
     """計算統計資料"""
     total_rounds = len(game_history)
     banker_count = sum(1 for record in game_history if record['result'] == '莊家')
     player_count = sum(1 for record in game_history if record['result'] == '閒家')
     tie_count = sum(1 for record in game_history if record['result'] == '和局')
-   
+    
     # 計算AI預測準確率
     ai_correct = 0
     ai_predictions = 0
-   
+    
     # 計算公式預測準確率
     formula_correct = 0
     formula_predictions = 0
-   
+    
     # 計算匹配率
     match_count = 0
     valid_predictions = 0
-   
+    
     for record in game_history:
         ai_pred = record.get('ai_prediction')
         formula_pred = record.get('formula_prediction')
         result = record.get('result')
-       
+        
         if ai_pred and ai_pred != '無法預測':
             ai_predictions += 1
             if ai_pred == result:
                 ai_correct += 1
-       
+        
         if formula_pred and formula_pred != '無法預測':
             formula_predictions += 1
             if formula_pred == result:
                 formula_correct += 1
-       
+        
         if ai_pred and formula_pred and ai_pred != '無法預測' and formula_pred != '無法預測':
             valid_predictions += 1
             if ai_pred == formula_pred:
                 match_count += 1
-   
+    
     ai_accuracy = (ai_correct / ai_predictions * 100) if ai_predictions > 0 else 0
     formula_accuracy = (formula_correct / formula_predictions * 100) if formula_predictions > 0 else 0
     match_rate = (match_count / valid_predictions * 100) if valid_predictions > 0 else 0
-   
+    
     return {
         'total_rounds': total_rounds,
         'banker_count': banker_count,

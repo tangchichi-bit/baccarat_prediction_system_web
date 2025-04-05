@@ -1,10 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
-"""
-百家樂算牌公式實現
-"""
-
 class BaccaratCardFormula:
     """百家樂算牌公式類別"""
     

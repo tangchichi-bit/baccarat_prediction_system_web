@@ -9,7 +9,7 @@ import random
 import numpy as np
 import time
 import threading
-import traceback  # 添加这一行
+import traceback  # 新增這一行
 from sklearn.ensemble import RandomForestClassifier
 import tkinter as tk
 from tkinter import ttk, Toplevel, StringVar
@@ -24,24 +24,24 @@ class BaccaratAIModel:
         self.is_trained = False
    
     def _prepare_features(self, history):
-        """准备特征数据"""
+        """準備特徵資料"""
         features = []
         labels = []
        
-        # 使用过去 10 局作为特征，预测下一局
+        # 使用過去 10 局作為特徵，預測下一局
         window_size = 10
        
-        # 打印调试信息
-        print(f"准备特征，历史记录长度={len(history)}")
-        print(f"历史记录样本: {history[:min(5, len(history))]}")
+        # 列印除錯資訊
+        print(f"準備特徵，歷史記錄長度={len(history)}")
+        print(f"歷史記錄樣本: {history[:min(5, len(history))]}")
        
         for i in range(len(history) - window_size):
             window = history[i:i+window_size]
            
-            # 将结果转换为数值特征
+            # 將結果轉換為數值特徵
             feature = []
             for result in window:
-                # 确保处理字符串结果
+                # 確保處理字串結果
                 if isinstance(result, str):
                     if "莊" in result:
                         feature.append(1)
@@ -50,12 +50,12 @@ class BaccaratAIModel:
                     else:  # 和局
                         feature.append(0)
                 else:
-                    # 如果结果不是字符串，尝试直接使用
+                    # 如果結果不是字串，嘗試直接使用
                     feature.append(result)
            
             features.append(feature)
            
-            # 下一局结果作为标签
+            # 下一局結果作為標籤
             next_result = history[i+window_size]
             if isinstance(next_result, str):
                 if "莊" in next_result:
@@ -65,43 +65,43 @@ class BaccaratAIModel:
                 else:  # 和局
                     labels.append(0)
             else:
-                # 如果结果不是字符串，尝试直接使用
+                # 如果結果不是字串，嘗試直接使用
                 labels.append(next_result)
        
-        # 打印调试信息
+        # 列印除錯資訊
         if features:
-            print(f"特征样本: {features[0]}")
-            print(f"标签样本: {labels[0]}")
+            print(f"特徵樣本: {features[0]}")
+            print(f"標籤樣本: {labels[0]}")
        
         return np.array(features), np.array(labels)
 
     def train(self, history):
-        """训练模型"""
+        """訓練模型"""
         if len(history) <= 10:
-            print("历史记录不足，无法训练")
+            print("歷史記錄不足，無法訓練")
             return False
        
         try:
             X, y = self._prepare_features(history)
            
             if len(X) == 0:
-                print("无法准备特征，无法训练")
+                print("無法準備特徵，無法訓練")
                 return False
            
-            print(f"训练数据: X形状={X.shape}, y形状={len(y)}")
-            print(f"训练数据样本: X[0]={X[0]}, y[0]={y[0]}")
+            print(f"訓練資料: X形狀={X.shape}, y形狀={len(y)}")
+            print(f"訓練資料樣本: X[0]={X[0]}, y[0]={y[0]}")
            
-            # 训练模型
+            # 訓練模型
             self.model.fit(X, y)
             self.is_trained = True
            
-            # 打印模型信息
-            print(f"模型已训练，类别={self.model.classes_}")
+            # 列印模型資訊
+            print(f"模型已訓練，類別={self.model.classes_}")
            
             return True
         except Exception as e:
-            print(f"训练出错: {str(e)}")
-            traceback.print_exc()  # 打印完整错误堆栈
+            print(f"訓練出錯: {str(e)}")
+            traceback.print_exc()  # 列印完整錯誤堆疊
             return False
 
     def predict(self, history):
@@ -116,7 +116,7 @@ class BaccaratAIModel:
             # 將結果轉換為數值特徵
             feature = []
             for result in recent:
-                # 统一处理各种可能的结果格式
+                # 統一處理各種可能的結果格式
                 if isinstance(result, str):
                     if "莊" in result:
                         feature.append(1)
@@ -125,7 +125,7 @@ class BaccaratAIModel:
                     else:  # 和局
                         feature.append(0)
                 else:
-                    # 如果结果不是字符串，尝试直接使用
+                    # 如果結果不是字串，嘗試直接使用
                     feature.append(result)
            
             # 進行預測
@@ -142,7 +142,7 @@ class BaccaratAIModel:
             result = "無法預測"
             confidence = 0
             
-            # 根据预测值确定结果
+            # 根據預測值確定結果
             if prediction == 1:
                 result = "莊家"
             elif prediction == 2:
@@ -150,7 +150,7 @@ class BaccaratAIModel:
             else:
                 result = "和局"
                 
-            # 查找对应类别的概率
+            # 查詢對應類別的機率
             for i, cls in enumerate(self.model.classes_):
                 if cls == prediction:
                     confidence = probabilities[i] * 100
@@ -296,7 +296,7 @@ class AITrainingManager:
                     self.history_data.after(0, lambda: self.history_data._update_after_training(training_success))
         except Exception as e:
             print(f"訓練過程中發生錯誤: {str(e)}")
-            traceback.print_exc()  # 添加这一行
+            traceback.print_exc()  # 新增這一行
         finally:
             self.is_training = False
 
